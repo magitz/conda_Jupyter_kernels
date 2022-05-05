@@ -1,0 +1,9 @@
+{
+ "language": "REPLACE",
+ "display_name": "REPLACE",
+ "argv": [
+  "REPLACE with your personal path to run.sh /apps/jupyterhub/templete_kernel/run.sh",
+  "-f",
+  "{connection_file}"
+ ]
+}
