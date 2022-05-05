@@ -22,7 +22,6 @@ The rest of this tutorial will walk through setting up an environment and then a
 
 `conda` and `mamba` pull packages from repositories where people post pre-packaged python packages. While there are several available repositories, like the main `conda-forge`, not every Python package is available via `conda`. You may still need to use `pip` to install some things...as noted later, `conda` still helps manage the environment by installing packages within the environment rather than everything in a single folder.
 
-
 ## 1. Edit your `~/.condarc` file
 
 `conda` environments contain all of the packages installed within the environment as well as a Python version. They can quickly grow in size and, especially if you have many environments, fill the 40GB of space provided in your home directory. As such, it is important to change the default and move the storage location from your home directory to your folder in `/blue/`.
@@ -51,11 +50,15 @@ show_channel_urls: false
 
 ## 2. Create your first environment
 
-2.1. Before we can run `conda` or `mamba` on HiPerGator, we need to load the `conda` module:
+### 2.1. Load the `conda module`
+
+Before we can run `conda` or `mamba` on HiPerGator, we need to load the `conda` module:
 
 `module load conda`
 
-2.2. To create your first environment, run the following command. In this example, I am creating an environment named `hfrl`
+### 2.2. Create your first environment
+
+To create your first environment, run the following command. In this example, I am creating an environment named `hfrl`
 
 `mamba create -n hfrl`
 
@@ -83,7 +86,11 @@ There are a few ways to do this. We can install things one-by-one with either `m
 
 > **Note:** when an environment is active, running `pip install` will install the package *into that environment*. So, even if you continue using `pip`, adding `conda` environments solves the problem of everything being installed in one location--each environment has its own `site-packages` folder and is isolated from other environments.
 
-4.1 Install gym-boxd2:
+### 4.1. `mamba install` packages
+
+Now we are ready to install packages using `mamba install ___`. This tutorial creates an environment for the [Hugging Face Deep Reinforcement Learning Course](https://github.com/huggingface/deep-rl-class), you can either follow along with that or adapt to your needs.
+
+This To install `gym-boxd2`, run:
 
 `mamba install gym-box2d`
 
@@ -99,9 +106,11 @@ Finally, `mamba` will summarize the results:
 
 ![Screenshot of mamba install summary](images/mamba_success.png)
 
-4.2. We also need to:
-> `mamba install stable-baselines3`
+### 4.2. Install additional packages
 
+You can list more than one package at a time in the `mamba install` command, but we only need one more for now...We also need to run:
+
+> `mamba install stable-baselines3`
 
 ## 5. Add stuff to our environment with `pip install`
 
@@ -115,19 +124,108 @@ If we know of a conda source that has that package, we can add it to the `channe
 
 But many things are only available via `pip`. So...
 
-`pip install huggingface_sb3` 
+`pip install huggingface_sb3`
 
 That will install `huggingface_sb3`. Again, because we are using environments and have the `hfrl` environment active, `pip` will not install `huggingface_sb3` in our `~/.local/lib/python3.X/site-packages/` directory, but rather within in our `hfrl` directory, at `/blue/group/user/conda/envs/hfrl/lib/python3.10/site-packages`. This prevents the issues and headaches mentioned at the start.
 
-5.2 We also need:
+### 5.1. Install additional packages
+
+As with `mamba`, we could list multiple packages in the `pip install` command, but again, we only need one more:
 
 `pip install ale-py==0.7.4`
 
+## 6. Use you kernel from command line or scripts
 
+Now that we have our environment ready, we can use it from the command line or a script using something like:
 
+```bash
+module load conda
+conda activate hfrl
 
+# Run my amazing python script
+python amazing_script.py
+```
 
+## 7. Setup a Jupyter Kernel for our environment
 
+Often, we want to use the environment in a Jupyter notebook. To do that, we can create our own Jupyter Kernel.
+
+### 7.1. Add the `jupyterlab` package
+
+In order to use an environment in Jupyter, we need to make sure we install the `jupyterlab` package in the environment:
+
+`mamba install jupyterlab`
+
+### 7.2. Copy the `template_kernel` folder to your path
+
+On HiPerGator, Jupyter looks in two places for kernels when you launch a notebook: 
+
+1. `/apps/jupyterhub/kernels/` for the globally available kernels that all users can use. (Also a good place to look for troubleshooting getting your own kernel going)
+1. `~/.local/share/jupyter/kernels` for each user. (Again, your home directory and the `.local` folder is hidden since it starts with a dot)
+
+Copy the `/apps/jupyterhub/template_kernel` folder into your `~/.local/share/jupyter/kernels` directory:
+
+`cp -r /apps/jupyterhub/template_kernel/ ~/.local/share/jupyter/kernels/hfrl`
+
+> **Note:**  This also renames the folder in the copy. It is important that the directory names be distinct in both your directory and the global `/apps/jupyterhub/kernels/` directory.
+
+This repository also has a copy of the HiPerGator [`template_kernel` directory](template_kernel). 
+
+### 7.3. Edit the template_kernel files
+
+The `template_kernel` directory has four files: the `run.sh` and `kernel.json` files will need to be edited in a text editor. We will use `nano` in this tutorial. The `logo-64X64.png` and `logo-32X32.png` are icons for your kernel to help visually distinguish it from others. You can upload icons of those dimensions to replace the files, but they need to be named with those names.
+
+#### 7.3.1. Edit the `kernel.json` file
+
+Let's start editing the `kernel.json` file. As an example, we can use:
+
+` nano ~/.local/share/jupyter/kernels/hfrl/kernel.json`
+
+The template has most of the information and notes on what needs to be updated. Edit the file to look like:
+
+```json
+{
+ "language": "python",
+ "display_name": "HF_Deep_RL",
+ "argv": [
+  "~/.local/share/jupyter/kernels/hfrl/run.sh",
+  "-f",
+  "{connection_file}"
+ ]
+}
+```
+
+#### 7.3.2. Edit the `run.sh` file
+
+The `run.sh` file needs the path to the `python` application that is in our environment. The easiest way to get that is to make sure the environment is activated and run the command: `which python`
+
+![Screenshot of the output of which python showing tha path to the environment's python](images/which_python.png)
+
+The path should look something like: `/blue/group/user/conda/envs/hfrl/bin/python`. Copy that path.
+
+Edit the run.sh file with `nano`:
+
+`nano ~/.local/share/jupyter/kernels/hfrl/run.sh `
+
+The file should looks like this, **but with your path**:
+
+```bash
+#!/usr/bin/bash
+
+exec /blue/ufhpc/magitz/conda/envs/hfrl/bin/python -m ipykernel "$@"
+```
+#### 7.3.3. Replace the logos
+
+If you want something more than the generic Python icon, you can place the logos with something else, like these:
+
+![32x32 hf logo](images/logo-32x32.png) 
+![64x64 HF RL logo](images/logo-64x64.png)
+
+## 8. Use your kernel!
+
+If you are doing this in a Jupyter session, refresh your page. If not, launch Jupyter.
+
+Your kernel should be there ready for you to use!
 
 
 
@@ -139,31 +237,8 @@ That will install `huggingface_sb3`. Again, because we are using environments an
 
 > **Note:** if you just `mamba install tensorflow`, you will get a version compiled with an older CUDA, which will be ***extremely*** slow...ask me how I know 🤦
 
-Then add in other stuff:
 
-`mamba install jupyterlab transformers huggingface_hub tensorboard ipywidgets datasets pillow matplotlib scikit-learn seaborn kaggle opencv`
 
-And...of course...`tensorflow-addons` is not in conda yet, so I had to `pip install tensorflow-addons`. Same with `vit-keras`. The good thing is, if you `mamba activate vit` and then run `pip install tensorflow-addons` that is installed in the virtual environment.
 
-## Adding the `vit` environment as a Jupyter kernel
-
-Now we need to add this environment as a Jupyter kernel so that we can select this environment to run our notebook.
-
-Again, while UFRC manages the environments that are globally available, you can always add your own. The steps are outlined on the [UFRC Jupyter page](https://help.rc.ufl.edu/doc/Jupyter_Notebooks#Personal_Kernels)
-
-<img src='https://github.com/AIBiology/Jupyter_Content/blob/main/kernels/vit/logo-64x64.png?raw=true' alt='ViT Kernel logo' align='left'>
-
-I have prepared the kernel and it's in the `kernels` folder of the `Jupyter_Content` repo.
-
-In addition to the global kernels, Jupyter will look in your directory `~/.local/share/jupyter/kernels/` for personal kernels.
-
-After pulling the latest version of the repo, open a terminal and run these commands (or use the repo at `/blue/zoo4926/share/Jupyter_Content` as below)
-
-```bash
-# Change to the path where you have the Jupyter_Content repo
-cd /blue/zoo4926/share/Jupyter_Content/kernels
-# Copy the vit folder to ~/.local/share/jupyter/kernels/
-cp -r vit ~/.local/share/jupyter/kernels/
-```
 
 Now, refresh the Jupyter tab in your browser. You should now have a ViT Kernel in the list of available kernels!
