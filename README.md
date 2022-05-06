@@ -88,15 +88,21 @@ There are a few ways to do this. We can install things one-by-one with either `m
 
 ### 4.1. `mamba install` packages
 
-Now we are ready to install packages using `mamba install ___`. This tutorial creates an environment for the [Hugging Face Deep Reinforcement Learning Course](https://github.com/huggingface/deep-rl-class), you can either follow along with that or adapt to your needs.
+Now we are ready to install packages using `mamba install ___`.
 
-This To install `gym-boxd2`, run:
+#### 4.1.1. Start with `cudatoolkit` and `pytorch`/`tensorflow` if using GPU!
 
-`mamba install gym-box2d`
+**If you plan on using a GPU**, it is important to both make the environment on a node with a GPU (within a Jupyter job for example) and to start by installing the `cudatoolkit` and `pytorch`, `tensorflow` or other frameworks.
 
-When you run that command, `mamba` will look in the repositories for the `gym-box2d` package and its dependencies. Here's a screenshot of part of the output:
+> **Note:** if you just `mamba install tensorflow`, you will get a version compiled with an older CUDA, which will be ***extremely*** slow or not recognize the GPU at all...ask me how I know 🤦. Same for `pytorch`.
 
-![Screenshot of mamba install gym-box2d](images/mamba_install.png)
+From the [PyTorch Installation page](https://pytorch.org/get-started/locally/), we should use:
+
+`mamba install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch`
+
+When you run that command, `mamba` will look in the repositories for the specified packages and their dependencies. Note we are specifying a particular version of `cudatoolkit`. As of May, 2022, that is the correct version on HiPerGator. Here's a screenshot of part of the output:
+
+![Screenshot of mamba install cudatoolkit=11.2 pytorch](images/mamba_install.png)
 
 `mamba` will list the packages it will install and ask you to confirm the changes. Typing 'y' or hitting return will proceed; 'n' will cancel:
 
@@ -108,19 +114,21 @@ Finally, `mamba` will summarize the results:
 
 ### 4.2. Install additional packages
 
-You can list more than one package at a time in the `mamba install` command, but we only need one more for now...We also need to run:
+ This tutorial creates an environment for the [Hugging Face Deep Reinforcement Learning Course](https://github.com/huggingface/deep-rl-class), you can either follow along with that or adapt to your needs.
 
-> `mamba install stable-baselines3`
+You can list more than one package at a time in the `mamba install` command. We need a couple more, so run:
+
+`mamba install gym-box2d stable-baselines3`
 
 ## 5. Add stuff to our environment with `pip install`
 
-As noted above, not everything is available in a `conda` repository. For example the next thing we want to install is `huggingface_sb3`.
+As noted above, not everything is available in a `conda` channel. For example the next thing we want to install is `huggingface_sb3`.
 
 If we type `mamba install huggingface_sb3`, we get a message saying nothing provides it:
 
 ![Screenshot of nothing provides huggingface_sb3 error](images/mamba_not_available.png)
 
-If we know of a conda source that has that package, we can add it to the `channels:` section of our `~/.condarc` file. That will prompt `mamba` to include that location when searching. 
+If we know of a conda source that has that package, we can add it to the `channels:` section of our `~/.condarc` file. That will prompt `mamba` to include that location when searching.
 
 But many things are only available via `pip`. So...
 
@@ -227,18 +235,3 @@ If you are doing this in a Jupyter session, refresh your page. If not, launch Ju
 
 Your kernel should be there ready for you to use!
 
-
-
-
-
-2.3. Then to get the tensorflow compiled with the latest CUDA for the A100s:
-
-`mamba install tensorflow==2.7.0=cuda112*`
-
-> **Note:** if you just `mamba install tensorflow`, you will get a version compiled with an older CUDA, which will be ***extremely*** slow...ask me how I know 🤦
-
-
-
-
-
-Now, refresh the Jupyter tab in your browser. You should now have a ViT Kernel in the list of available kernels!
