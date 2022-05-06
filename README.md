@@ -6,7 +6,7 @@ While `pip` is easy to use and works for many use cases, there are some major dr
 
 1. If you install a version of a package that is also installed in by UFRC (either now or in the future), your version will take precedence. Your version appears in the the `PYTHON_PATH` before the UFRC installed version. That may be fine *now*, but some time down the road there may be a newer version installed by UFRC for compatibility with something else and your older version still takes precedence and breaks the other package. This can be hard to diagnose when things start failing as you have likely forgotten that you installed the package in the first place.
 1. You may want to install something that needs a different version of a package. Sometimes, the unfortunate reality is that two packages cannot co-exist because they require different versions of dependencies. This becomes a challenge to manage with `pip` as there isn't a method to swap active versions.
-1. `pip` installs **everything** in one locations: `~/.local/lib/python3.X/site-packages/`. All packages installed are in the same location for any given version of Python.
+1. On its own, `pip` installs **everything** in one locations: `~/.local/lib/python3.X/site-packages/`. All packages installed are in the same location for any given version of Python.
 
 ## Conda and Mamba to the rescue!
 
@@ -16,19 +16,24 @@ While `pip` is easy to use and works for many use cases, there are some major dr
 
 Check out the [UFRC Help page on conda](https://help.rc.ufl.edu/doc/Conda)
 
-The rest of this tutorial will walk through setting up an environment and then a kenrel to use that environment in Jupyter.
+The rest of this tutorial will walk through setting up an environment and then a Jupyter kernel to use that environment in Jupyter Notebooks.
 
 ### A caveat
 
-`conda` and `mamba` pull packages from repositories where people post pre-packaged python packages. While there are several available repositories, like the main `conda-forge`, not every Python package is available via `conda`. You may still need to use `pip` to install some things...as noted later, `conda` still helps manage the environment by installing packages within the environment rather than everything in a single folder.
+`conda` and `mamba` pull packages from channels, or repositories, where a set of pre-packaged python packages are made available. While there are several available channels, like the main `conda-forge`, not every Python package is available via a `conda` channel. You may still need to use `pip` to install some things...as noted later, `conda` still helps manage the environment by installing packages *within the active environment* rather than everything in a single folder.
 
 ## 1. Edit your `~/.condarc` file
 
-`conda` environments contain all of the packages installed within the environment as well as a Python version. They can quickly grow in size and, especially if you have many environments, fill the 40GB of space provided in your home directory. As such, it is important to change the default and move the storage location from your home directory to your folder in `/blue/`.
+`conda`'s behavior is controlled by a file in your home directory called `.condarc`. The dot at the start of the name means that the file is hidden. If you have not run `conda` before, you won't have this file. Whether the file exists or not, the steps here will help you modify the file to work best on HiPerGator.
+
+`conda` environments contain all of the packages installed within the environment as well as a Python version. They can quickly grow in size and, especially if you have many environments, fill the 40GB of space provided in your home directory (the environment we will create in this training is 5.3GB in size). As such, it is important to change the default and move the storage location from your home directory to your folder in `/blue/`.
 
 To do so, edit or create your `~/.condarc` to use `/blue/group/user/conda/`, replacing `group` with your group name, and `user` with your username. **Note:** This file is in your home directory (`~/`) and hidden (starts with a dot).
 
-One way to do this is to type: `nano ~/.condarc`
+One way to do this is to type: 
+
+`nano ~/.condarc`
+
 If the file is empty, paste in the text below, editing the `env_dirs:` and `pkg_dirs` as below. If the file has contents, update those lines.
 
  > Your `~/.condarc` should look something like this when you are done editing (again, replacing `group` and `user` in the paths with your group and username):
@@ -58,7 +63,7 @@ Before we can run `conda` or `mamba` on HiPerGator, we need to load the `conda` 
 
 ### 2.2. Create your first environment
 
-To create your first environment, run the following command. In this example, I am creating an environment named `hfrl`
+To create your first environment, run the following command. In this example, I am creating an environment named `hfrl`:
 
 `mamba create -n hfrl`
 
@@ -70,11 +75,11 @@ Here's a screenshot of the output from running that command. Yours should look s
 
 ## 3. Activate the new environment
 
-To actiate our environment (whether created with `mamba` or `conda` we use the `conda activate env_name` command. Let's activate our new environment:
+To activate our environment (whether created with `mamba` or `conda` we use the `conda activate env_name` command. Let's activate our new environment:
 
 `conda activate hfrl`
 
-Notice that your command prompt changes when you activate an environment to indicate which environment is active showing that in parentheses before the other information:
+Notice that your command prompt changes when you activate an environment to indicate which environment is active, showing that in parentheses before the other information:
 
 > `(hfrl) [magitz@c0907a-s23 magitz]$ ` 
 
@@ -82,7 +87,7 @@ Notice that your command prompt changes when you activate an environment to indi
 
 Now we are ready to start adding things to our environment.
 
-There are a few ways to do this. We can install things one-by-one with either `mamba install ____` or `pip install ____`.
+There are a few ways to do this. We can install things one-by-one with either `mamba install ____` or `pip install ____`. We will look at using yaml files below.
 
 > **Note:** when an environment is active, running `pip install` will install the package *into that environment*. So, even if you continue using `pip`, adding `conda` environments solves the problem of everything being installed in one location--each environment has its own `site-packages` folder and is isolated from other environments.
 
@@ -111,6 +116,14 @@ When you run that command, `mamba` will look in the repositories for the specifi
 Finally, `mamba` will summarize the results:
 
 ![Screenshot of mamba install summary](images/mamba_success.png)
+
+#### 4.1.2 Tensorflow installation alternative
+
+While not needed for this tutorial, many users will want TensorFlow instead of PyTorch, se we will provide the command for that here. To install TensorFlow, use this command:
+
+`mamba install tensorflow cudatoolkit>=11.2`
+
+This post at conda-forge has additional information and tips for installing particular versions or installing on a non-GPU node: [GPU enabled TensorFlow builds on conda-forge](https://conda-forge.org/blog/posts/2021-11-03-tensorflow-gpu/).
 
 ### 4.2. Install additional packages
 
@@ -177,7 +190,7 @@ Copy the `/apps/jupyterhub/template_kernel` folder into your `~/.local/share/jup
 
 > **Note:**  This also renames the folder in the copy. It is important that the directory names be distinct in both your directory and the global `/apps/jupyterhub/kernels/` directory.
 
-This repository also has a copy of the HiPerGator [`template_kernel` directory](template_kernel). 
+This repository also has a copy of the HiPerGator [`template_kernel` directory](template_kernel).
 
 ### 7.3. Edit the template_kernel files
 
@@ -187,7 +200,7 @@ The `template_kernel` directory has four files: the `run.sh` and `kernel.json` f
 
 Let's start editing the `kernel.json` file. As an example, we can use:
 
-` nano ~/.local/share/jupyter/kernels/hfrl/kernel.json`
+`nano ~/.local/share/jupyter/kernels/hfrl/kernel.json`
 
 The template has most of the information and notes on what needs to be updated. Edit the file to look like:
 
@@ -222,6 +235,7 @@ The file should looks like this, **but with your path**:
 
 exec /blue/ufhpc/magitz/conda/envs/hfrl/bin/python -m ipykernel "$@"
 ```
+
 #### 7.3.3. Replace the logos
 
 If you want something more than the generic Python icon, you can place the logos with something else, like these:
@@ -235,3 +249,24 @@ If you are doing this in a Jupyter session, refresh your page. If not, launch Ju
 
 Your kernel should be there ready for you to use!
 
+## 9. Create an `environment.yml` file
+
+Now that you have your environment working, you may want to document its contents and/or share it with others. The `environment.yml` file defines the environment and can be used to build a new environment with the same setup.
+
+To export an environment file from an existing environment, run:
+
+`conda env export > hfrl.yml`
+
+You can inspect the contents of this file with `cat hfrl.yml`. This file defines the packages and versions that make up the environment as it is at this point in time. Note that it also includes packages that were installed via `pip`.
+
+## 10. Create an environment from a yaml file
+
+If you share the environment yaml file created above with another user, they can create a copy of your environment using the command:
+
+`conda env create --file hfrl.yml`
+
+They may need to edit the last line to change the location to match where they want their environment created.
+
+## 11. Group environments
+
+It is possible to create a shared environment accessed by a group on HiPerGator, storing the environment in, for example, `/blue/group/share/conda`. In general, this works best if only one user has write access to the environment. All installs should be made by that one user and should be communicated with the other users in the group.
